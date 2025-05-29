@@ -1,7 +1,6 @@
 package com.leif2k.shoppinglist.presentation
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.leif2k.shoppinglist.data.ShopListRepositoryImpl
 import com.leif2k.shoppinglist.domain.EditShopItemUseCase
