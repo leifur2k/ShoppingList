@@ -1,7 +1,6 @@
 package com.leif2k.shoppinglist.presentation
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -9,12 +8,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.leif2k.shoppinglist.R
-import com.leif2k.shoppinglist.common.LOG_TAG
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var rvShopList: RecyclerView
+    private lateinit var fabAddShopItem: FloatingActionButton
+
     private lateinit var shopListAdapter: ShopListAdapter
     private lateinit var viewModel: MainViewModel
 
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
         initViews()
 
         shopListAdapter = ShopListAdapter()
@@ -41,22 +43,19 @@ class MainActivity : AppCompatActivity() {
             ShopListAdapter.MAX_POOL_SIZE
         )
 
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
-        viewModel.getShopList().observe(this, {
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        viewModel.getShopList().observe(this) {
             shopListAdapter.submitList(it)
-        })
-
-
-
-        shopListAdapter.onShopItemClickListener = {
-            Log.d(LOG_TAG, it.toString())
-        }
-
-        shopListAdapter.onShopItemLongClickListener = {
-            viewModel.editShopItem(it)
         }
 
 
+        setClickListeners()
+        addSwipeForElements()
+
+
+    }
+
+    private fun addSwipeForElements() {
         val itemTouchHelper = ItemTouchHelper(object :
             ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun onMove(
@@ -76,8 +75,24 @@ class MainActivity : AppCompatActivity() {
         itemTouchHelper.attachToRecyclerView(rvShopList)
     }
 
+    private fun setClickListeners() {
+        shopListAdapter.onShopItemClickListener = {
+            val intent = ShopItemActivity.newIntentEditItem(this@MainActivity, it.id)
+            startActivity(intent)
+        }
+
+        shopListAdapter.onShopItemLongClickListener = {
+            viewModel.editShopItem(it)
+        }
+
+        fabAddShopItem.setOnClickListener {
+            val intent = ShopItemActivity.newIntentAddItem(this@MainActivity)
+            startActivity(intent)
+        }
+    }
 
     private fun initViews() {
         rvShopList = findViewById(R.id.rvShopList)
+        fabAddShopItem = findViewById(R.id.fabAddShopItem)
     }
 }
