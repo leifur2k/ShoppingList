@@ -8,6 +8,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -20,23 +21,18 @@ import com.leif2k.shoppinglist.R
 import com.leif2k.shoppinglist.common.LOG_TAG
 import com.leif2k.shoppinglist.domain.ShopItem
 
-class ShopItemActivity : AppCompatActivity() {
-
-    private lateinit var tilName: TextInputLayout
-    private lateinit var tilCount: TextInputLayout
-    private lateinit var etName: EditText
-    private lateinit var etCount: EditText
-    private lateinit var butSave: Button
+class ShopItemActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedListener {
 
     private lateinit var viewModel: ShopItemViewModel
     private var mode = MODE_ADD
+    private var shopItemId = -1
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_shop_item)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.shop_item_container)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
             v.updatePadding(
@@ -48,93 +44,33 @@ class ShopItemActivity : AppCompatActivity() {
             insets
         }
 
-        initViews()
-        viewModel = ViewModelProvider(this)[ShopItemViewModel::class.java]
-
         parseIntent()
-        initClickListeners()
-        initObservers()
+
+        if (savedInstanceState == null) {
+            launchRightMode()
+        }
+
 
     }
 
+    private fun launchRightMode() {
+        val fragment = when (mode) {
+            MODE_EDIT -> ShopItemFragment.newInstanceEditItem(shopItemId)
+            else -> ShopItemFragment.newInstanceAddItem()
+        }
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.shop_item_container, fragment)
+            .commit()
+    }
 
     private fun parseIntent() {
         if (intent.getStringExtra(EXTRA_SCREEN_MODE) == MODE_EDIT) {
-            val shopItemId = intent.getIntExtra(EXTRA_SHOP_ITEM_ID, -1)
-            viewModel.getShopItem(shopItemId)
+            shopItemId = intent.getIntExtra(EXTRA_SHOP_ITEM_ID, -1)
             mode = MODE_EDIT
         } else if (intent.getStringExtra(EXTRA_SCREEN_MODE) == MODE_ADD) {
             mode = MODE_ADD
         }
-    }
-
-    private fun initClickListeners() {
-        butSave.setOnClickListener {
-            if (mode == MODE_EDIT) {
-                viewModel.editShopItem(etName.text.toString(), etCount.text.toString())
-            } else if (mode == MODE_ADD){
-                viewModel.addShopItem(etName.text.toString(), etCount.text.toString())
-            }
-        }
-
-        etName.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                viewModel.resetErrorInputName()
-            }
-            override fun afterTextChanged(s: Editable?) {
-            }
-
-        })
-
-        etCount.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                viewModel.resetErrorInputCount()
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-            }
-
-        })
-    }
-
-    private fun initObservers() {
-        viewModel.errorInputName.observe(this) {
-            if (it) {
-                tilName.error = "Incorrect Name"
-            }else {
-                tilName.error = null
-            }
-        }
-
-        viewModel.errorInputCount.observe(this) {
-            if (it) {
-                tilCount.error = "Incorrect Count"
-            }else {
-                tilCount.error = null
-            }
-        }
-
-        viewModel.shopItem.observe(this) {
-            etName.setText(it.name)
-            etCount.setText(it.count.toString())
-        }
-
-        viewModel.isReadyToFinish.observe(this) {
-                finish()
-        }
-    }
-
-    private fun initViews() {
-        tilName = findViewById(R.id.tilName)
-        tilCount = findViewById(R.id.tilCount)
-        etName = findViewById(R.id.etName)
-        etCount = findViewById(R.id.etCount)
-        butSave = findViewById(R.id.butSave)
     }
 
     companion object {
@@ -155,5 +91,9 @@ class ShopItemActivity : AppCompatActivity() {
             intent.putExtra(EXTRA_SCREEN_MODE, MODE_ADD)
             return intent
         }
+    }
+
+    override fun onEditingFinished() {
+        finish()
     }
 }
