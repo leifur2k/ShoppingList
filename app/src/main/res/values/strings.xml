@@ -5,6 +5,6 @@
     <string name="button_save">save</string>
     <string name="edit_text_hint_name">Name</string>
     <string name="edit_text_hint_count">Count</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="error_input_name">Invalid name</string>
+    <string name="error_input_count">Invalid count</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.leif2k.shoppinglist.presentation
+package com.leif2k.shoppinglist.presentation.view
 
 import android.os.Bundle
 import android.widget.Toast
@@ -7,43 +7,40 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.leif2k.shoppinglist.R
+import com.leif2k.shoppinglist.databinding.ActivityMainBinding
+import com.leif2k.shoppinglist.presentation.recyclerview.ShopListAdapter
+import com.leif2k.shoppinglist.presentation.viewmodel.MainViewModel
 
 class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedListener {
 
-    private lateinit var rvShopList: RecyclerView
-    private lateinit var fabAddShopItem: FloatingActionButton
+    private lateinit var binding: ActivityMainBinding
 
     private lateinit var shopListAdapter: ShopListAdapter
     private lateinit var viewModel: MainViewModel
-
-    private var shopItemContainer: FragmentContainerView? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        initViews()
-
         shopListAdapter = ShopListAdapter()
-        rvShopList.adapter = shopListAdapter
-        rvShopList.recycledViewPool.setMaxRecycledViews(
+        binding.rvShopList.adapter = shopListAdapter
+        binding.rvShopList.recycledViewPool.setMaxRecycledViews(
             ShopListAdapter.VIEW_TYPE_ENABLED,
             ShopListAdapter.MAX_POOL_SIZE
         )
-        rvShopList.recycledViewPool.setMaxRecycledViews(
+        binding.rvShopList.recycledViewPool.setMaxRecycledViews(
             ShopListAdapter.VIEW_TYPE_DISABLED,
             ShopListAdapter.MAX_POOL_SIZE
         )
@@ -62,7 +59,7 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
 
 
     private fun isOnePaneMode(): Boolean {
-        return shopItemContainer == null
+        return binding.shopItemContainerLand == null
     }
 
     private fun launchFragment(fragment: Fragment) {
@@ -89,7 +86,7 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
                 viewModel.removeShopItem(shopItem)
             }
         })
-        itemTouchHelper.attachToRecyclerView(rvShopList)
+        itemTouchHelper.attachToRecyclerView(binding.rvShopList)
     }
 
     private fun setClickListeners() {
@@ -106,7 +103,7 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
             viewModel.editShopItem(it)
         }
 
-        fabAddShopItem.setOnClickListener {
+        binding.fabAddShopItem.setOnClickListener {
             if (isOnePaneMode()) {
                 val intent = ShopItemActivity.newIntentAddItem(this@MainActivity)
                 startActivity(intent)
@@ -116,11 +113,6 @@ class MainActivity : AppCompatActivity(), ShopItemFragment.OnEditingFinishedList
         }
     }
 
-    private fun initViews() {
-        shopItemContainer = findViewById(R.id.shop_item_container_land)
-        rvShopList = findViewById(R.id.rvShopList)
-        fabAddShopItem = findViewById(R.id.fabAddShopItem)
-    }
 
     override fun onEditingFinished() {
         Toast.makeText(this@MainActivity, "Success", Toast.LENGTH_SHORT).show()

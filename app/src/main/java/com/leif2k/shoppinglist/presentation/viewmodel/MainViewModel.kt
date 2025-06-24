@@ -1,4 +1,4 @@
-package com.leif2k.shoppinglist.presentation
+package com.leif2k.shoppinglist.presentation.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
