@@ -1,4 +1,4 @@
-package com.leif2k.shoppinglist.presentation
+package com.leif2k.shoppinglist.presentation.view
 
 import android.content.Context
 import android.os.Bundle
@@ -7,23 +7,18 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.textfield.TextInputLayout
-import com.leif2k.shoppinglist.R
+import com.leif2k.shoppinglist.databinding.FragmentShopItemBinding
+import com.leif2k.shoppinglist.presentation.viewmodel.ShopItemViewModel
 
 class ShopItemFragment : Fragment() {
 
-    private lateinit var tilName: TextInputLayout
-    private lateinit var tilCount: TextInputLayout
-    private lateinit var etName: EditText
-    private lateinit var etCount: EditText
-    private lateinit var butSave: Button
+    private var _binding: FragmentShopItemBinding? = null
+    private val binding
+        get() = _binding ?: throw RuntimeException("FragmentShopItemBinding == null")
 
     private lateinit var viewModel: ShopItemViewModel
-
     private lateinit var onEditingFinishedListener: OnEditingFinishedListener
 
     private var screenMode: String = MODE_ADD
@@ -47,22 +42,27 @@ class ShopItemFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_shop_item, container, false)
+    ): View {
+        _binding = FragmentShopItemBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        initViews(view)
         viewModel = ViewModelProvider(this)[ShopItemViewModel::class.java]
+        if (shopItemId >= 0) viewModel.getShopItem(shopItemId)
 
-        if (shopItemId >= 0) {
-            viewModel.getShopItem(shopItemId)
-        }
+        binding.viewModel = viewModel
+        binding.lifecycleOwner = viewLifecycleOwner
 
         initClickListeners()
         initObservers()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
 
@@ -80,15 +80,21 @@ class ShopItemFragment : Fragment() {
     }
 
     private fun initClickListeners() {
-        butSave.setOnClickListener {
+        binding.butSave.setOnClickListener {
             if (screenMode == MODE_EDIT) {
-                viewModel.editShopItem(etName.text.toString(), etCount.text.toString())
+                viewModel.editShopItem(
+                    binding.etName.text.toString(),
+                    binding.etCount.text.toString()
+                )
             } else if (screenMode == MODE_ADD) {
-                viewModel.addShopItem(etName.text.toString(), etCount.text.toString())
+                viewModel.addShopItem(
+                    binding.etName.text.toString(),
+                    binding.etCount.text.toString()
+                )
             }
         }
 
-        etName.addTextChangedListener(object : TextWatcher {
+        binding.etName.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
@@ -101,7 +107,7 @@ class ShopItemFragment : Fragment() {
 
         })
 
-        etCount.addTextChangedListener(object : TextWatcher {
+        binding.etCount.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
             }
 
@@ -116,38 +122,13 @@ class ShopItemFragment : Fragment() {
     }
 
     private fun initObservers() {
-        viewModel.errorInputName.observe(viewLifecycleOwner) {
-            if (it) {
-                tilName.error = "Incorrect Name"
-            } else {
-                tilName.error = null
-            }
-        }
-
-        viewModel.errorInputCount.observe(viewLifecycleOwner) {
-            if (it) {
-                tilCount.error = "Incorrect Count"
-            } else {
-                tilCount.error = null
-            }
-        }
-
-        viewModel.shopItem.observe(viewLifecycleOwner) {
-            etName.setText(it.name)
-            etCount.setText(it.count.toString())
-        }
+//        viewModel.shopItem.observe(viewLifecycleOwner) {
+//            binding.etCount.setText(it.count.toString())
+//        }
 
         viewModel.isReadyToFinish.observe(viewLifecycleOwner) {
             onEditingFinishedListener.onEditingFinished()
         }
-    }
-
-    private fun initViews(view: View) {
-        tilName = view.findViewById(R.id.tilName)
-        tilCount = view.findViewById(R.id.tilCount)
-        etName = view.findViewById(R.id.etName)
-        etCount = view.findViewById(R.id.etCount)
-        butSave = view.findViewById(R.id.butSave)
     }
 
     interface OnEditingFinishedListener {
